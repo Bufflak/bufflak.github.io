@@ -21,25 +21,24 @@
             padding: 10px;
             box-sizing: border-box;
         }
-        #popupForm {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
-            background: white;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
         .marker-type {
             margin-bottom: 10px;
             cursor: pointer;
             color: blue;
         }
         .marker-type:hover {
+            text-decoration: underline;
+        }
+        .marker-list {
+            margin-left: 10px;
+            display: none; /* Hidden by default */
+        }
+        .marker-list-item {
+            cursor: pointer;
+            color: darkblue;
+            margin-bottom: 5px;
+        }
+        .marker-list-item:hover {
             text-decoration: underline;
         }
     </style>
@@ -98,6 +97,12 @@
             green: L.layerGroup().addTo(map),
         };
 
+        const markersByType = {
+            default: [],
+            red: [],
+            green: []
+        };
+
         // Create sidebar for marker types
         const markerTypeList = document.getElementById('markerTypeList');
         for (const type in markerGroups) {
@@ -105,13 +110,29 @@
             markerTypeDiv.className = 'marker-type';
             markerTypeDiv.textContent = type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
 
-            // Add click event to show all markers of a type
+            const markerList = document.createElement('div');
+            markerList.className = 'marker-list';
             markerTypeDiv.addEventListener('click', function () {
-                // Ensure the corresponding layer group is shown
-                map.addLayer(markerGroups[type]);
+                // Toggle visibility of the marker list
+                markerList.style.display = markerList.style.display === 'none' ? 'block' : 'none';
+            });
+
+            markerGroups[type].on('layeradd', function (e) {
+                // Add the marker to the marker list
+                const markerListItem = document.createElement('div');
+                markerListItem.className = 'marker-list-item';
+                markerListItem.textContent = e.layer.getPopup()
+                    ? e.layer.getPopup().getContent()
+                    : 'Unnamed Marker';
+                markerListItem.addEventListener('click', function () {
+                    map.setView(e.layer.getLatLng(), map.getZoom());
+                    e.layer.openPopup();
+                });
+                markerList.appendChild(markerListItem);
             });
 
             markerTypeList.appendChild(markerTypeDiv);
+            markerTypeList.appendChild(markerList);
         }
 
         // References to the popup form
@@ -135,6 +156,7 @@
             const comment = markerCommentInput.value;
 
             const marker = L.marker(currentLatLng, { icon: iconOptions[selectedType] }).addTo(markerGroups[selectedType]);
+            markersByType[selectedType].push(marker);
             if (comment) {
                 marker.bindPopup(comment);
             }
