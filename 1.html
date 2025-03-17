@@ -7,40 +7,31 @@
         #map {
             width: 100%;
             height: 100vh;
+            margin-left: 200px; /* Create space for the sidebar */
         }
-        #popupForm {
-            display: none;
+        #sidebar {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2000;
+            top: 0;
+            left: 0;
+            width: 200px;
+            height: 100vh;
             background: white;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-right: 1px solid #ccc;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .marker-type {
+            margin-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <div id="map"></div>
-
-    <!-- Popup Form -->
-    <div id="popupForm">
-        <label for="markerType">Select Marker Type:</label>
-        <select id="markerType">
-            <option value="default">Default</option>
-            <option value="red">Red</option>
-            <option value="green">Green</option>
-        </select>
-        <br /><br />
-        <label for="markerComment">Enter Comment:</label>
-        <input type="text" id="markerComment" placeholder="Your comment" />
-        <br /><br />
-        <button id="addMarker">Add Marker</button>
-        <button id="cancel">Cancel</button>
+    <div id="sidebar">
+        <h3>Marker Types</h3>
+        <div id="markerTypeList"></div>
     </div>
+    <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -61,48 +52,58 @@
         L.imageOverlay('1.jpg', bounds).addTo(map);
         map.fitBounds(bounds);
 
-        // Marker icons
+        // Marker icons and marker groups
         const iconOptions = {
             default: L.icon({ iconUrl: 'cave.jpg', iconSize: [25, 41], iconAnchor: [12, 41] }),
             red: L.icon({ iconUrl: 'cave.jpg', iconSize: [25, 41], iconAnchor: [12, 41] }),
             green: L.icon({ iconUrl: 'cave.jpg', iconSize: [25, 41], iconAnchor: [12, 41] }),
         };
+        const markerGroups = {
+            default: L.layerGroup().addTo(map),
+            red: L.layerGroup().addTo(map),
+            green: L.layerGroup().addTo(map),
+        };
 
-        // References to the popup and its elements
-        const popupForm = document.getElementById('popupForm');
-        const markerTypeSelect = document.getElementById('markerType');
-        const markerCommentInput = document.getElementById('markerComment');
-        const addMarkerButton = document.getElementById('addMarker');
-        const cancelButton = document.getElementById('cancel');
+        // Create sidebar for marker types
+        const markerTypeList = document.getElementById('markerTypeList');
+        for (const type in markerGroups) {
+            const markerTypeDiv = document.createElement('div');
+            markerTypeDiv.className = 'marker-type';
 
-        let currentLatLng = null; // Store the location where the user clicked
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = true;
+            checkbox.id = `toggle-${type}`;
+            checkbox.addEventListener('change', function () {
+                if (this.checked) {
+                    map.addLayer(markerGroups[type]);
+                } else {
+                    map.removeLayer(markerGroups[type]);
+                }
+            });
 
-        // Show popup form on map click
+            const label = document.createElement('label');
+            label.htmlFor = `toggle-${type}`;
+            label.textContent = type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
+
+            markerTypeDiv.appendChild(checkbox);
+            markerTypeDiv.appendChild(label);
+            markerTypeList.appendChild(markerTypeDiv);
+        }
+
+        // Add click-to-place-marker functionality
         map.on('click', function (e) {
-            currentLatLng = e.latlng; // Store the clicked location
-            popupForm.style.display = 'block'; // Show the popup
-        });
+            const selectedType = prompt("Enter marker type (default, red, green):", "default");
+            if (!iconOptions[selectedType]) {
+                alert("Invalid marker type!");
+                return;
+            }
 
-        // Add marker when "Add Marker" button is clicked
-        addMarkerButton.addEventListener('click', function () {
-            const selectedIcon = markerTypeSelect.value;
-            const comment = markerCommentInput.value;
-
-            const marker = L.marker(currentLatLng, { icon: iconOptions[selectedIcon] }).addTo(map);
+            const comment = prompt("Enter your comment for this marker:");
+            const marker = L.marker(e.latlng, { icon: iconOptions[selectedType] }).addTo(markerGroups[selectedType]);
             if (comment) {
                 marker.bindPopup(comment);
             }
-
-            // Reset form and hide popup
-            markerTypeSelect.value = 'default';
-            markerCommentInput.value = '';
-            popupForm.style.display = 'none';
-        });
-
-        // Cancel and close popup
-        cancelButton.addEventListener('click', function () {
-            popupForm.style.display = 'none'; // Hide the popup
-            markerCommentInput.value = ''; // Clear the input field
         });
     </script>
 </body>
