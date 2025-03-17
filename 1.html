@@ -21,6 +21,19 @@
             padding: 10px;
             box-sizing: border-box;
         }
+        #popupForm {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2000;
+            background: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
         .marker-type {
             margin-bottom: 10px;
         }
@@ -32,6 +45,22 @@
         <div id="markerTypeList"></div>
     </div>
     <div id="map"></div>
+
+    <!-- Popup Form -->
+    <div id="popupForm">
+        <label for="markerType">Select Marker Type:</label>
+        <select id="markerType">
+            <option value="default">Default</option>
+            <option value="red">Red</option>
+            <option value="green">Green</option>
+        </select>
+        <br /><br />
+        <label for="markerComment">Enter Comment:</label>
+        <input type="text" id="markerComment" placeholder="Your comment" />
+        <br /><br />
+        <button id="addMarker">Add Marker</button>
+        <button id="cancel">Cancel</button>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
@@ -91,19 +120,41 @@
             markerTypeList.appendChild(markerTypeDiv);
         }
 
-        // Add click-to-place-marker functionality
-        map.on('click', function (e) {
-            const selectedType = prompt("Enter marker type (default, red, green):", "default");
-            if (!iconOptions[selectedType]) {
-                alert("Invalid marker type!");
-                return;
-            }
+        // References to the popup form
+        const popupForm = document.getElementById('popupForm');
+        const markerTypeSelect = document.getElementById('markerType');
+        const markerCommentInput = document.getElementById('markerComment');
+        const addMarkerButton = document.getElementById('addMarker');
+        const cancelButton = document.getElementById('cancel');
 
-            const comment = prompt("Enter your comment for this marker:");
-            const marker = L.marker(e.latlng, { icon: iconOptions[selectedType] }).addTo(markerGroups[selectedType]);
+        let currentLatLng = null; // Store the location where the user clicked
+
+        // Show popup form on map click
+        map.on('click', function (e) {
+            currentLatLng = e.latlng; // Store the clicked location
+            popupForm.style.display = 'block'; // Show the popup
+        });
+
+        // Add marker when "Add Marker" button is clicked
+        addMarkerButton.addEventListener('click', function () {
+            const selectedType = markerTypeSelect.value;
+            const comment = markerCommentInput.value;
+
+            const marker = L.marker(currentLatLng, { icon: iconOptions[selectedType] }).addTo(markerGroups[selectedType]);
             if (comment) {
                 marker.bindPopup(comment);
             }
+
+            // Reset form and hide popup
+            markerTypeSelect.value = 'default';
+            markerCommentInput.value = '';
+            popupForm.style.display = 'none';
+        });
+
+        // Cancel and close popup
+        cancelButton.addEventListener('click', function () {
+            popupForm.style.display = 'none'; // Hide the popup
+            markerCommentInput.value = ''; // Clear the input field
         });
     </script>
 </body>
