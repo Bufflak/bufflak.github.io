@@ -8,6 +8,16 @@
             width: 100%;
             height: 100vh;
         }
+        .dropdown-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body>
@@ -17,8 +27,8 @@
     <script>
         // Initialize the map
         const map = L.map('map', {
-            crs: L.CRS.Simple, // Use simple CRS for custom images
-            minZoom: -2, // Allow zooming out
+            crs: L.CRS.Simple,
+            minZoom: -2,
         });
 
         // Your custom image dimensions
@@ -26,15 +36,40 @@
         const imageHeight = 980; // Replace with your image's height
 
         // Image bounds
-        const bounds = [[980, 1531], [imageHeight, imageWidth]];
+        const bounds = [[0, 0], [imageHeight, imageWidth]];
 
         // Add your custom image to the map
         L.imageOverlay('1.jpg', bounds).addTo(map);
         map.fitBounds(bounds);
 
+        // Marker icons
+        const iconOptions = {
+            default: L.icon({ iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png', iconSize: [25, 41], iconAnchor: [12, 41] }),
+            red: L.icon({ iconUrl: 'https://via.placeholder.com/25/f03/fff.png?text=R', iconSize: [25, 41], iconAnchor: [12, 41] }),
+            green: L.icon({ iconUrl: 'https://via.placeholder.com/25/0f3/fff.png?text=G', iconSize: [25, 41], iconAnchor: [12, 41] }),
+        };
+
+        // Dropdown functionality for marker selection
+        let selectedIconType = 'default';
+        const dropdown = document.createElement('select');
+        dropdown.className = 'dropdown-container';
+
+        for (const key in iconOptions) {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = key.charAt(0).toUpperCase() + key.slice(1); // Capitalize
+            dropdown.appendChild(option);
+        }
+
+        dropdown.addEventListener('change', (e) => {
+            selectedIconType = e.target.value;
+        });
+
+        document.body.appendChild(dropdown);
+
         // Add click-to-place-marker functionality
         map.on('click', function (e) {
-            const marker = L.marker(e.latlng).addTo(map);
+            const marker = L.marker(e.latlng, { icon: iconOptions[selectedIconType] }).addTo(map);
             const comment = prompt("Enter your comment for this marker:");
             if (comment) {
                 marker.bindPopup(comment).openPopup();
