@@ -36,6 +36,11 @@
         }
         .marker-type {
             margin-bottom: 10px;
+            cursor: pointer;
+            color: blue;
+        }
+        .marker-type:hover {
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -98,25 +103,14 @@
         for (const type in markerGroups) {
             const markerTypeDiv = document.createElement('div');
             markerTypeDiv.className = 'marker-type';
+            markerTypeDiv.textContent = type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
 
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.checked = true;
-            checkbox.id = `toggle-${type}`;
-            checkbox.addEventListener('change', function () {
-                if (this.checked) {
-                    map.addLayer(markerGroups[type]);
-                } else {
-                    map.removeLayer(markerGroups[type]);
-                }
+            // Add click event to show all markers of a type
+            markerTypeDiv.addEventListener('click', function () {
+                // Ensure the corresponding layer group is shown
+                map.addLayer(markerGroups[type]);
             });
 
-            const label = document.createElement('label');
-            label.htmlFor = `toggle-${type}`;
-            label.textContent = type.charAt(0).toUpperCase() + type.slice(1); // Capitalize
-
-            markerTypeDiv.appendChild(checkbox);
-            markerTypeDiv.appendChild(label);
             markerTypeList.appendChild(markerTypeDiv);
         }
 
